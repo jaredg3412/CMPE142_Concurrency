@@ -88,3 +88,42 @@ void printStats(void){
     printf("Total Meals Eaten:\t\t%d\n", eatCount[0] + eatCount[1] + eatCount[2]);
     printf("Total Dishes Prepared:\t%d\n", produced);
 }
+
+void *chef(void *arg){
+    int choice;
+    srandom( (unsigned int) time(NULL) );
+    while(produced < ITERATIONS * 2){
+        pthread_mutex_lock(&lock);
+        while(bellF == 0){
+            pthread_cond_wait(&bell, &lock);
+        }
+        choice = (int) random() % 3;
+        switch(choice){
+            case 0:
+                restaurantCounter.item1 = HAMBURGER;
+                restaurantCounter.item2 = FRIES;
+                break;
+            case 1:
+                restaurantCounter.item1 = HAMBURGER;
+                restaurantCounter.item2 = SODA;
+                break;
+            case 2:
+                restaurantCounter.item1 = SODA;
+                restaurantCounter.item2 = FRIES;
+                break;
+            default:
+                break;
+        }
+        bellF = 0;
+        servedF = 1;
+        produced += 2;
+        scheduled = 0;
+        pthread_cond_signal(&scheduleClear);
+        pthread_cond_signal(&served);
+        pthread_mutex_unlock(&lock);
+    }
+    sleep(1);
+    finishedF = 1;
+    pthread_cond_signal(&finished);
+    return NULL;
+}
